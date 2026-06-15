@@ -145,9 +145,67 @@ function startRound() {
     })),
     currentHoleIndex: 0,
   };
+
+  if (draft.courseName === 'テスト') {
+    generateTestData();
+    const rounds = Storage.getRounds();
+    rounds.push(draft);
+    Storage.saveRounds(rounds);
+    draft = null;
+    showScreen('home');
+    return;
+  }
+
   holeIndex = 0;
   Storage.saveDraft(draft);
   showScreen('hole');
+}
+
+function generateTestData() {
+  const WOODS = ['1W', '3W', '5W', 'UT'];
+  const IRONS = ['5I', '6I', '7I', '8I', '9I', 'PW'];
+  const APPROACH = ['PW', 'AW', 'SW'];
+  const MID = ['3W', '5W', 'UT', '5I', '6I', '7I', '8I'];
+  const DIRS = ['far-left', 'left', 'straight', 'straight', 'straight', 'right', 'far-right'];
+  const LIES = ['fairway', 'fairway', 'rough', 'rough', 'bunker', 'around'];
+
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  draft.holes.forEach(hole => {
+    const diff = Math.floor(Math.random() * 6) - 1; // -1〜+4
+    const score = Math.max(2, hole.par + diff);
+    const putts = Math.min(Math.floor(Math.random() * 3) + 1, score - 1); // 1〜3、ショット最低1本確保
+    const numShots = score - putts;
+
+    hole.putts = putts;
+    hole.shots = Array(numShots).fill(null).map((_, i) => {
+      if (i === 0) {
+        // 1打目：ティーショット
+        return {
+          lie: 'tee',
+          club: hole.par === 3 ? pick(IRONS) : pick(WOODS),
+          direction: pick(DIRS),
+          distance: null,
+        };
+      } else if (i === numShots - 1 && numShots > 1) {
+        // 最終ショット：アプローチ
+        return {
+          lie: pick(['fairway', 'around', 'around']),
+          club: pick(APPROACH),
+          direction: pick(DIRS),
+          distance: null,
+        };
+      } else {
+        // 中間ショット
+        return {
+          lie: pick(LIES),
+          club: pick(MID),
+          direction: pick(DIRS),
+          distance: null,
+        };
+      }
+    });
+  });
 }
 
 // ── Hole ──
