@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Golf Log</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -68,9 +68,9 @@
         </div>
         <div class="preset-group-label" style="margin-top:12px">札幌リージェント</div>
         <div class="preset-row">
-          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-old')">旧コース<small>Par73</small></button>
+          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-old')">旧コース<small>Par72</small></button>
           <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-new')">新コース<small>Par72</small></button>
-          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-thomson')">トムソン<small>Par71</small></button>
+          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-thomson')">トムソン<small>Par72</small></button>
         </div>
       </div>
     </div>
@@ -120,6 +120,17 @@
           <button class="btn-stepper" onclick="changePutts(-1)">−</button>
           <span id="putts-display" class="putts-value">0</span>
           <button class="btn-stepper" onclick="changePutts(1)">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">飛距離計測</div>
+      <div class="card">
+        <div class="distance-tool">
+          <button class="btn-gps" id="btn-gps-a" onclick="markGPS('a')">📍 打つ前</button>
+          <div class="distance-result" id="distance-result">— m</div>
+          <button class="btn-gps" id="btn-gps-b" onclick="markGPS('b')">📍 ボール地点</button>
         </div>
       </div>
     </div>
@@ -253,6 +264,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

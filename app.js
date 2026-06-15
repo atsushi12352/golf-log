@@ -27,6 +27,7 @@ let currentLie = null;
 let currentDirection = null;
 let charts = {};
 let setupPars = [...PRESETS.standard.pars];
+let gpsA = null, gpsB = null;
 
 // ── Screen Router ──
 function showScreen(name) {
@@ -203,6 +204,7 @@ function changePutts(delta) {
 }
 
 function nextHole() {
+  resetGPS();
   if (holeIndex === 17) {
     Storage.saveDraft(draft);
     renderComplete();
@@ -213,6 +215,55 @@ function nextHole() {
     Storage.saveDraft(draft);
     renderHole();
   }
+}
+
+// ── GPS Distance ──
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function markGPS(point) {
+  if (!navigator.geolocation) {
+    alert('このブラウザは位置情報に対応していません');
+    return;
+  }
+  const btn = document.getElementById('btn-gps-' + point);
+  btn.textContent = '取得中…';
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    if (point === 'a') {
+      gpsA = coords;
+      btn.textContent = '✅ 打つ前';
+    } else {
+      gpsB = coords;
+      btn.textContent = '✅ ボール地点';
+    }
+    btn.disabled = false;
+    btn.classList.add('marked');
+    if (gpsA && gpsB) {
+      const dist = Math.round(haversine(gpsA.lat, gpsA.lng, gpsB.lat, gpsB.lng));
+      document.getElementById('distance-result').textContent = dist + ' m';
+    }
+  }, () => {
+    btn.textContent = point === 'a' ? '📍 打つ前' : '📍 ボール地点';
+    btn.disabled = false;
+    alert('位置情報の取得に失敗しました。\n設定で位置情報を許可してください。');
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function resetGPS() {
+  gpsA = null; gpsB = null;
+  const btnA = document.getElementById('btn-gps-a');
+  const btnB = document.getElementById('btn-gps-b');
+  if (btnA) { btnA.textContent = '📍 打つ前'; btnA.classList.remove('marked'); btnA.disabled = false; }
+  if (btnB) { btnB.textContent = '📍 ボール地点'; btnB.classList.remove('marked'); btnB.disabled = false; }
+  const res = document.getElementById('distance-result');
+  if (res) res.textContent = '— m';
 }
 
 // ── Lie → Direction → Club ──

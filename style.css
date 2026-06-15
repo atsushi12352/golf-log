@@ -317,6 +317,25 @@ body {
   background: #E8F0FE; color: #1A56DB;
 }
 
+/* ── GPS Distance Tool ── */
+.distance-tool {
+  display: flex; align-items: center;
+  justify-content: space-between; padding: 14px 16px; gap: 12px;
+}
+.btn-gps {
+  flex: 1; padding: 12px 8px;
+  background: var(--bg); border: none; border-radius: 12px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; color: var(--label); text-align: center;
+}
+.btn-gps:active { opacity: 0.7; }
+.btn-gps.marked { background: #E8F5E9; color: var(--green); }
+.btn-gps:disabled { opacity: 0.5; }
+.distance-result {
+  font-size: 26px; font-weight: 200;
+  min-width: 70px; text-align: center; color: var(--label);
+}
+
 /* ── Delete round button ── */
 .btn-del-round {
   background: none; border: none;
