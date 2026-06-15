@@ -1,0 +1,327 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --blue: #007AFF;
+  --green: #34C759;
+  --red: #FF3B30;
+  --orange: #FF9500;
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --sep: rgba(60,60,67,0.12);
+  --label: #000000;
+  --label2: #3C3C43;
+  --secondary: #8E8E93;
+  --tertiary: #C7C7CC;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--label);
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Screens ── */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  height: 56px;
+  background: rgba(242,242,247,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--sep);
+}
+.navbar-title { font-weight: 600; font-size: 17px; }
+.navbar-left, .navbar-right { min-width: 72px; }
+.navbar-right { text-align: right; }
+.nav-progress { font-size: 14px; color: var(--secondary); }
+
+/* ── Buttons ── */
+.btn-text {
+  background: none; border: none;
+  color: var(--blue); font-size: 17px;
+  cursor: pointer; padding: 8px;
+}
+.btn-text-danger {
+  display: block; width: 100%; margin-top: 10px;
+  background: none; border: none;
+  color: var(--red); font-size: 17px;
+  cursor: pointer; padding: 14px; text-align: center;
+}
+.btn-primary {
+  display: block; width: 100%;
+  padding: 16px; background: var(--label);
+  color: #fff; border: none; border-radius: 14px;
+  font-size: 17px; font-weight: 600; cursor: pointer;
+}
+.btn-primary:active { opacity: 0.75; }
+.btn-large { padding: 18px; font-size: 19px; }
+.btn-secondary {
+  display: block; width: 100%;
+  padding: 14px; margin-top: 8px;
+  background: var(--card); color: var(--blue);
+  border: none; border-radius: 12px;
+  font-size: 17px; font-weight: 500; cursor: pointer;
+}
+.btn-secondary:active { background: #E5E5EA; }
+.btn-chip {
+  padding: 7px 16px; margin-right: 8px; margin-bottom: 10px;
+  background: var(--card); border: none; border-radius: 20px;
+  font-size: 15px; color: var(--blue); cursor: pointer;
+}
+.btn-stepper {
+  width: 44px; height: 44px; border-radius: 22px;
+  border: none; background: var(--bg);
+  font-size: 24px; color: var(--blue);
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+}
+.btn-stepper:active { background: #E0E0E5; }
+
+/* ── Resume banner ── */
+.resume-banner {
+  background: var(--blue); color: #fff;
+  padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 15px;
+}
+.banner-btns { display: flex; gap: 10px; }
+.banner-btns button {
+  border: none; padding: 6px 14px; border-radius: 8px;
+  font-weight: 600; cursor: pointer; font-size: 14px;
+  background: #fff; color: var(--blue);
+}
+.banner-btns .btn-ghost {
+  background: rgba(255,255,255,0.25); color: #fff;
+}
+
+/* ── Layout ── */
+.content { flex: 1; padding: 20px 16px 48px; }
+.section { margin-bottom: 28px; }
+.section-header {
+  font-size: 13px; color: var(--secondary);
+  text-transform: uppercase; letter-spacing: 0.4px;
+  margin-bottom: 8px; padding-left: 4px;
+}
+.chip-row { margin-bottom: 10px; }
+.hint { font-size: 13px; color: var(--secondary); margin-top: 6px; padding-left: 4px; }
+
+/* ── Cards ── */
+.card { background: var(--card); border-radius: 12px; overflow: hidden; }
+.sep { height: 1px; background: var(--sep); margin-left: 16px; }
+
+/* ── Form ── */
+.form-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px; min-height: 44px;
+}
+.form-row input {
+  border: none; outline: none;
+  text-align: right; font-size: 17px;
+  color: var(--secondary); background: transparent; max-width: 200px;
+}
+
+/* ── Par Grid ── */
+.par-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px; background: var(--sep);
+}
+.par-cell {
+  background: var(--card); padding: 10px 4px;
+  text-align: center; cursor: pointer; user-select: none;
+}
+.par-cell:active { background: #F2F2F7; }
+.par-cell-num { font-size: 10px; color: var(--secondary); margin-bottom: 2px; }
+.par-cell-val { font-size: 17px; font-weight: 500; }
+
+/* ── Hole Header ── */
+.hole-header {
+  display: flex; justify-content: space-around;
+  padding: 20px 16px; margin-bottom: 0;
+}
+.hole-stat { text-align: center; }
+.hole-stat-value { font-size: 28px; font-weight: 300; letter-spacing: -0.5px; }
+.hole-stat-label { font-size: 12px; color: var(--secondary); margin-top: 2px; }
+
+/* ── Shot List ── */
+.shot-item {
+  background: var(--card);
+  display: flex; align-items: center;
+  padding: 12px 16px; gap: 10px;
+  border-bottom: 1px solid var(--sep);
+}
+.shot-item:first-child { border-radius: 12px 12px 0 0; }
+.shot-item:last-child { border-bottom: none; border-radius: 0 0 12px 12px; }
+.shot-item:only-child { border-radius: 12px; border-bottom: none; }
+.shot-num { font-size: 13px; color: var(--secondary); min-width: 18px; }
+.shot-lie {
+  font-size: 13px; padding: 3px 10px;
+  border-radius: 20px; background: var(--bg);
+}
+.shot-dir { font-size: 22px; margin-left: auto; }
+.shot-del {
+  background: none; border: none;
+  color: var(--red); font-size: 20px;
+  cursor: pointer; padding: 4px; line-height: 1;
+}
+
+/* ── Putts ── */
+.putts-control {
+  display: flex; align-items: center;
+  justify-content: space-between; padding: 14px 24px;
+}
+.putts-value { font-size: 40px; font-weight: 200; }
+
+/* ── Big Lie Buttons ── */
+.big-btn-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; padding: 4px 0;
+}
+.btn-big {
+  background: var(--card); border: none; border-radius: 16px;
+  padding: 24px 16px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 500;
+  cursor: pointer; color: var(--label); min-height: 110px;
+}
+.btn-big:active { transform: scale(0.96); background: #EBEBF0; }
+.big-icon { font-size: 34px; }
+.btn-big-danger { color: var(--red); }
+
+/* ── Direction ── */
+.direction-visual { text-align: center; padding: 16px 0 8px; }
+.target-arrow { font-size: 48px; color: var(--blue); }
+.target-label { font-size: 13px; color: var(--secondary); margin-top: 2px; }
+.direction-grid { display: flex; gap: 8px; padding: 12px 0; }
+.btn-dir {
+  flex: 1; background: var(--card); border: none;
+  border-radius: 12px; padding: 16px 4px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  font-size: 13px; cursor: pointer; color: var(--label);
+  min-height: 80px;
+}
+.btn-dir:active { background: #E5E5EA; }
+.btn-dir-center { background: var(--blue); color: #fff; }
+.btn-dir-center:active { background: #005FD3; }
+.dir-icon { font-size: 26px; }
+
+/* ── Round List ── */
+.card-list { display: flex; flex-direction: column; }
+.round-item {
+  background: var(--card);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; border-bottom: 1px solid var(--sep); cursor: pointer;
+}
+.round-item:first-child { border-radius: 12px 12px 0 0; }
+.round-item:last-child { border-bottom: none; border-radius: 0 0 12px 12px; }
+.round-item:only-child { border-radius: 12px; border-bottom: none; }
+.round-item:active { background: #F2F2F7; }
+.round-date { font-size: 17px; font-weight: 500; }
+.round-sub { font-size: 14px; color: var(--secondary); margin-top: 2px; }
+.round-score { font-size: 30px; font-weight: 200; }
+
+/* ── Complete ── */
+.complete-hero { text-align: center; padding: 36px 24px; }
+.complete-score { font-size: 80px; font-weight: 100; letter-spacing: -4px; }
+.complete-vs-par { font-size: 26px; color: var(--secondary); font-weight: 300; margin-top: 4px; }
+.complete-course { font-size: 15px; color: var(--secondary); margin-top: 8px; }
+.stat-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 13px 16px; border-bottom: 1px solid var(--sep);
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--label2); }
+.stat-value { font-weight: 500; }
+
+/* ── Charts ── */
+.chart-card { padding: 16px; }
+.chart-card canvas { max-height: 220px; }
+
+/* ── Miss Pattern Table ── */
+.miss-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 280px; }
+.miss-table th {
+  padding: 10px 8px; text-align: center;
+  color: var(--secondary); font-weight: 400;
+  border-bottom: 1px solid var(--sep);
+}
+.miss-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--sep); }
+.miss-table tr:last-child td { border-bottom: none; }
+.miss-td-label { text-align: left !important; font-weight: 500; padding-left: 14px !important; }
+.cell-high { color: var(--red); font-weight: 700; }
+.cell-mid { color: var(--orange); font-weight: 600; }
+
+/* ── Empty State ── */
+.empty-state { text-align: center; padding: 52px 24px; color: var(--secondary); font-size: 15px; line-height: 1.7; }
+
+/* ── Preset Buttons ── */
+.preset-card { padding: 16px; }
+.preset-group-label { font-size: 12px; color: var(--secondary); margin-bottom: 8px; }
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-preset {
+  flex: 1; min-width: 80px;
+  background: var(--bg); border: none; border-radius: 12px;
+  padding: 12px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 15px; font-weight: 600; cursor: pointer; color: var(--label);
+}
+.btn-preset small { font-size: 11px; font-weight: 400; color: var(--secondary); }
+.btn-preset:active { opacity: 0.7; }
+.btn-preset-accent { background: #EEF4FF; color: var(--blue); }
+.btn-preset-accent small { color: var(--blue); opacity: 0.7; }
+
+/* ── Club Grid ── */
+.club-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 4px 0;
+}
+.club-grid .btn-club:nth-child(13),
+.club-grid .btn-club:nth-child(14) {
+  grid-column: span 2;
+}
+.btn-club {
+  background: var(--card); border: none; border-radius: 14px;
+  padding: 18px 8px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  font-size: 18px; font-weight: 600;
+  cursor: pointer; color: var(--label);
+}
+.btn-club small { font-size: 11px; font-weight: 400; color: var(--secondary); }
+.btn-club:active { transform: scale(0.95); background: #EBEBF0; }
+
+/* ── Shot club badge ── */
+.shot-club {
+  font-size: 12px; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px;
+  background: #E8F0FE; color: #1A56DB;
+}
+
+/* ── Delete round button ── */
+.btn-del-round {
+  background: none; border: none;
+  font-size: 18px; cursor: pointer;
+  padding: 4px; opacity: 0.5;
+  line-height: 1;
+}
+.btn-del-round:active { opacity: 1; }

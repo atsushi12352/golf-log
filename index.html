@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Golf Log</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+<!-- ホーム -->
+<div id="screen-home" class="screen active">
+  <nav class="navbar">
+    <div class="navbar-title">Golf Log</div>
+    <button class="navbar-right btn-text" onclick="showScreen('analysis')">分析</button>
+  </nav>
+  <div id="resume-banner" class="resume-banner" style="display:none">
+    <span>中断中のラウンドがあります</span>
+    <div class="banner-btns">
+      <button onclick="resumeDraft()">再開</button>
+      <button onclick="discardDraft()" class="btn-ghost">破棄</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section">
+      <button class="btn-primary btn-large" onclick="showScreen('setup')">新しいラウンドを開始</button>
+    </div>
+    <div class="section">
+      <div class="section-header">過去のラウンド</div>
+      <div id="round-list" class="card-list"></div>
+      <div id="no-rounds" class="empty-state"><p>まだラウンドの記録がありません</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- セットアップ -->
+<div id="screen-setup" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('home')">キャンセル</button>
+    <div class="navbar-title">新しいラウンド</div>
+    <button class="navbar-right btn-text" onclick="startRound()">開始</button>
+  </nav>
+  <div class="content">
+    <div class="section">
+      <div class="section-header">基本情報</div>
+      <div class="card">
+        <div class="form-row">
+          <label>日付</label>
+          <input type="date" id="input-date">
+        </div>
+        <div class="sep"></div>
+        <div class="form-row">
+          <label>コース名</label>
+          <input type="text" id="input-course" placeholder="任意">
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">コースプリセット</div>
+      <div class="preset-card card">
+        <div class="preset-group-label">汎用</div>
+        <div class="preset-row">
+          <button class="btn-preset" onclick="setParPreset('standard')">標準<small>Par72</small></button>
+          <button class="btn-preset" onclick="setParPreset('all4')">全Par4<small>Par72</small></button>
+        </div>
+        <div class="preset-group-label" style="margin-top:12px">札幌リージェント</div>
+        <div class="preset-row">
+          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-old')">旧コース<small>Par73</small></button>
+          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-new')">新コース<small>Par72</small></button>
+          <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-thomson')">トムソン<small>Par71</small></button>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">ホール別パー確認・修正</div>
+      <div class="card">
+        <div id="par-grid" class="par-grid"></div>
+      </div>
+      <div class="hint">タップでPar3→4→5と切り替えられます</div>
+    </div>
+  </div>
+</div>
+
+<!-- ホール入力 -->
+<div id="screen-hole" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" id="hole-quit-btn">終了</button>
+    <div class="navbar-title" id="hole-title">ホール 1</div>
+    <div class="navbar-right nav-progress" id="hole-progress">1 / 18</div>
+  </nav>
+  <div class="content">
+    <div class="hole-header card">
+      <div class="hole-stat">
+        <div class="hole-stat-value" id="hole-par-display">Par 4</div>
+        <div class="hole-stat-label">パー</div>
+      </div>
+      <div class="hole-stat">
+        <div class="hole-stat-value" id="hole-score-display">—</div>
+        <div class="hole-stat-label">スコア</div>
+      </div>
+      <div class="hole-stat">
+        <div class="hole-stat-value" id="hole-vs-par-display">—</div>
+        <div class="hole-stat-label">vs Par</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">ショット</div>
+      <div id="shot-list"></div>
+      <button class="btn-secondary" onclick="showScreen('lie')">＋ ショットを追加</button>
+    </div>
+
+    <div class="section">
+      <div class="section-header">パット数</div>
+      <div class="card">
+        <div class="putts-control">
+          <button class="btn-stepper" onclick="changePutts(-1)">−</button>
+          <span id="putts-display" class="putts-value">0</span>
+          <button class="btn-stepper" onclick="changePutts(1)">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="btn-primary" id="next-hole-btn" onclick="nextHole()">次のホールへ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ライ選択 -->
+<div id="screen-lie" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('hole')">戻る</button>
+    <div class="navbar-title">ライを選択</div>
+  </nav>
+  <div class="content">
+    <div class="big-btn-grid">
+      <button class="btn-big" onclick="selectLie('tee')"><span class="big-icon">🏌️</span>ティー</button>
+      <button class="btn-big" onclick="selectLie('fairway')"><span class="big-icon">🟩</span>FW</button>
+      <button class="btn-big" onclick="selectLie('rough')"><span class="big-icon">🌿</span>ラフ</button>
+      <button class="btn-big" onclick="selectLie('bunker')"><span class="big-icon">⛱</span>バンカー</button>
+      <button class="btn-big" onclick="selectLie('around')"><span class="big-icon">📍</span>グリーン周り</button>
+      <button class="btn-big btn-big-danger" onclick="selectLie('ob')"><span class="big-icon">🚫</span>OB</button>
+    </div>
+  </div>
+</div>
+
+<!-- 方向選択 -->
+<div id="screen-direction" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('lie')">戻る</button>
+    <div class="navbar-title">方向を選択</div>
+  </nav>
+  <div class="content">
+    <div class="direction-visual">
+      <div class="target-arrow">↑</div>
+      <div class="target-label">目標方向</div>
+    </div>
+    <div class="direction-grid">
+      <button class="btn-dir" onclick="selectDirection('far-left')"><span class="dir-icon">↙</span><span>左</span></button>
+      <button class="btn-dir" onclick="selectDirection('left')"><span class="dir-icon">↖</span><span>やや左</span></button>
+      <button class="btn-dir btn-dir-center" onclick="selectDirection('straight')"><span class="dir-icon">↑</span><span>まっすぐ</span></button>
+      <button class="btn-dir" onclick="selectDirection('right')"><span class="dir-icon">↗</span><span>やや右</span></button>
+      <button class="btn-dir" onclick="selectDirection('far-right')"><span class="dir-icon">↘</span><span>右</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- クラブ選択 -->
+<div id="screen-club" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('direction')">戻る</button>
+    <div class="navbar-title">クラブを選択</div>
+  </nav>
+  <div class="content">
+    <div class="club-grid">
+      <button class="btn-club" onclick="selectClub('1W')">1W<small>ドライバー</small></button>
+      <button class="btn-club" onclick="selectClub('3W')">3W</button>
+      <button class="btn-club" onclick="selectClub('5W')">5W</button>
+      <button class="btn-club" onclick="selectClub('UT')">UT</button>
+      <button class="btn-club" onclick="selectClub('4I')">4I</button>
+      <button class="btn-club" onclick="selectClub('5I')">5I</button>
+      <button class="btn-club" onclick="selectClub('6I')">6I</button>
+      <button class="btn-club" onclick="selectClub('7I')">7I</button>
+      <button class="btn-club" onclick="selectClub('8I')">8I</button>
+      <button class="btn-club" onclick="selectClub('9I')">9I</button>
+      <button class="btn-club" onclick="selectClub('PW')">PW</button>
+      <button class="btn-club" onclick="selectClub('AW')">AW</button>
+      <button class="btn-club" onclick="selectClub('SW')">SW</button>
+      <button class="btn-club" onclick="selectClub('PT')">PT<small>パター</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- ラウンド完了 -->
+<div id="screen-complete" class="screen">
+  <nav class="navbar">
+    <div class="navbar-title">ラウンド完了</div>
+  </nav>
+  <div class="content">
+    <div class="complete-hero card">
+      <div class="complete-score" id="complete-score">—</div>
+      <div class="complete-vs-par" id="complete-vs-par"></div>
+      <div class="complete-course" id="complete-course"></div>
+    </div>
+    <div class="section">
+      <div class="section-header">スタッツ</div>
+      <div class="card" id="complete-stats"></div>
+    </div>
+    <div class="section">
+      <button class="btn-primary" onclick="saveRound()">保存する</button>
+      <button class="btn-text-danger" onclick="discardRound()">破棄する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 分析 -->
+<div id="screen-analysis" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('home')">戻る</button>
+    <div class="navbar-title">分析</div>
+  </nav>
+  <div class="content">
+    <div id="no-analysis" class="empty-state" style="display:none">
+      <p>分析データがありません<br>ラウンドを記録してください</p>
+    </div>
+    <div id="analysis-content">
+      <div class="section">
+        <div class="section-header">総合スタッツ</div>
+        <div class="card" id="overall-stats"></div>
+      </div>
+      <div class="section">
+        <div class="section-header">スコア分布</div>
+        <div class="card chart-card"><canvas id="score-dist-chart"></canvas></div>
+      </div>
+      <div class="section">
+        <div class="section-header">ショット方向分布</div>
+        <div class="card chart-card"><canvas id="direction-chart"></canvas></div>
+      </div>
+      <div class="section">
+        <div class="section-header">ライ別ミスパターン</div>
+        <div class="card" id="miss-pattern-table" style="overflow-x:auto"></div>
+      </div>
+      <div class="section">
+        <div class="section-header">ラウンド履歴</div>
+        <div id="analysis-round-list" class="card-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js?v=3"></script>
+</body>
+</html>
