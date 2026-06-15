@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Golf Log</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -129,10 +129,11 @@
       <div class="card">
         <div class="distance-tool">
           <button class="btn-gps" id="btn-gps-a" onclick="markGPS('a')">📍 打つ前</button>
-          <div class="distance-result" id="distance-result">— m</div>
+          <div class="distance-result" id="distance-result">— yd</div>
           <button class="btn-gps" id="btn-gps-b" onclick="markGPS('b')">📍 ボール地点</button>
         </div>
       </div>
+      <div id="gps-apply-area"></div>
     </div>
 
     <div class="section">
@@ -202,6 +203,66 @@
       <button class="btn-club" onclick="selectClub('AW')">AW</button>
       <button class="btn-club" onclick="selectClub('SW')">SW</button>
       <button class="btn-club" onclick="selectClub('PT')">PT<small>パター</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- ショット編集 -->
+<div id="screen-edit-shot" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('hole')">キャンセル</button>
+    <div class="navbar-title">ショット編集</div>
+    <button class="navbar-right btn-text" onclick="updateShot()">保存</button>
+  </nav>
+  <div class="content">
+    <div class="section">
+      <div class="section-header">ライ</div>
+      <div class="edit-lie-grid">
+        <button class="btn-edit-lie" data-value="tee" onclick="setEditLie('tee')">🏌️ ティー</button>
+        <button class="btn-edit-lie" data-value="fairway" onclick="setEditLie('fairway')">🟩 FW</button>
+        <button class="btn-edit-lie" data-value="rough" onclick="setEditLie('rough')">🌿 ラフ</button>
+        <button class="btn-edit-lie" data-value="bunker" onclick="setEditLie('bunker')">⛱ バンカー</button>
+        <button class="btn-edit-lie" data-value="around" onclick="setEditLie('around')">📍 グリーン周り</button>
+        <button class="btn-edit-lie" data-value="ob" onclick="setEditLie('ob')">🚫 OB</button>
+      </div>
+    </div>
+    <div class="section" id="edit-club-section">
+      <div class="section-header">クラブ</div>
+      <div class="club-grid">
+        <button class="btn-club btn-edit-club" data-value="1W" onclick="setEditClub('1W')">1W<small>ドライバー</small></button>
+        <button class="btn-club btn-edit-club" data-value="3W" onclick="setEditClub('3W')">3W</button>
+        <button class="btn-club btn-edit-club" data-value="5W" onclick="setEditClub('5W')">5W</button>
+        <button class="btn-club btn-edit-club" data-value="UT" onclick="setEditClub('UT')">UT</button>
+        <button class="btn-club btn-edit-club" data-value="4I" onclick="setEditClub('4I')">4I</button>
+        <button class="btn-club btn-edit-club" data-value="5I" onclick="setEditClub('5I')">5I</button>
+        <button class="btn-club btn-edit-club" data-value="6I" onclick="setEditClub('6I')">6I</button>
+        <button class="btn-club btn-edit-club" data-value="7I" onclick="setEditClub('7I')">7I</button>
+        <button class="btn-club btn-edit-club" data-value="8I" onclick="setEditClub('8I')">8I</button>
+        <button class="btn-club btn-edit-club" data-value="9I" onclick="setEditClub('9I')">9I</button>
+        <button class="btn-club btn-edit-club" data-value="PW" onclick="setEditClub('PW')">PW</button>
+        <button class="btn-club btn-edit-club" data-value="AW" onclick="setEditClub('AW')">AW</button>
+        <button class="btn-club btn-edit-club" data-value="SW" onclick="setEditClub('SW')">SW</button>
+        <button class="btn-club btn-edit-club" data-value="PT" onclick="setEditClub('PT')">PT<small>パター</small></button>
+      </div>
+    </div>
+    <div class="section" id="edit-dir-section">
+      <div class="section-header">方向</div>
+      <div class="direction-grid">
+        <button class="btn-dir btn-edit-dir" data-value="far-left" onclick="setEditDir('far-left')"><span class="dir-icon">↙</span><span>左</span></button>
+        <button class="btn-dir btn-edit-dir" data-value="left" onclick="setEditDir('left')"><span class="dir-icon">↖</span><span>やや左</span></button>
+        <button class="btn-dir btn-edit-dir" data-value="straight" onclick="setEditDir('straight')"><span class="dir-icon">↑</span><span>まっすぐ</span></button>
+        <button class="btn-dir btn-edit-dir" data-value="right" onclick="setEditDir('right')"><span class="dir-icon">↗</span><span>やや右</span></button>
+        <button class="btn-dir btn-edit-dir" data-value="far-right" onclick="setEditDir('far-right')"><span class="dir-icon">↘</span><span>右</span></button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">飛距離</div>
+      <div class="card">
+        <div class="distance-input-row">
+          <input type="number" id="edit-distance" class="distance-input" placeholder="180" inputmode="numeric" min="0" max="400">
+          <span class="distance-unit">yd</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -287,6 +348,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

@@ -29,6 +29,8 @@ let currentDirection = null;
 let charts = {};
 let setupPars = [...PRESETS.standard.pars];
 let gpsA = null, gpsB = null;
+let editingShotIndex = null;
+let editLie = null, editClub = null, editDirection = null;
 
 // ── Screen Router ──
 function showScreen(name) {
@@ -182,8 +184,13 @@ function renderHole() {
       ${s.club ? `<span class="shot-club">${s.club}</span>` : ''}
       ${s.distance ? `<span class="shot-dist">${s.distance}yd</span>` : ''}
       ${s.direction ? `<span class="shot-dir">${DIR_ICON[s.direction]}</span>` : ''}
-      <button class="shot-del" onclick="removeShot(${i})">×</button>
+      <div class="shot-actions">
+        <button class="shot-edit" onclick="openEditShot(${i})">✏️</button>
+        <button class="shot-del" onclick="removeShot(${i})">×</button>
+      </div>
     </div>`).join('');
+
+  updateGPSApplyButtons();
 
   document.getElementById('hole-quit-btn').onclick = () => {
     if (confirm('ラウンドを中断しますか？（データは保存されます）')) {
@@ -250,6 +257,7 @@ function markGPS(point) {
     if (gpsA && gpsB) {
       const yards = Math.round(haversine(gpsA.lat, gpsA.lng, gpsB.lat, gpsB.lng) * 1.09361);
       document.getElementById('distance-result').textContent = yards + ' yd';
+      updateGPSApplyButtons();
     }
   }, () => {
     btn.textContent = point === 'a' ? '📍 打つ前' : '📍 ボール地点';
@@ -266,6 +274,31 @@ function resetGPS() {
   if (btnB) { btnB.textContent = '📍 ボール地点'; btnB.classList.remove('marked'); btnB.disabled = false; }
   const res = document.getElementById('distance-result');
   if (res) res.textContent = '— yd';
+  const area = document.getElementById('gps-apply-area');
+  if (area) area.innerHTML = '';
+}
+
+function updateGPSApplyButtons() {
+  const area = document.getElementById('gps-apply-area');
+  if (!area) return;
+  if (!gpsA || !gpsB || !draft || draft.holes[holeIndex].shots.length === 0) {
+    area.innerHTML = '';
+    return;
+  }
+  const shots = draft.holes[holeIndex].shots;
+  area.innerHTML = '<div class="gps-apply-label">ショットに反映</div>' +
+    shots.map((s, i) => `
+      <button class="btn-apply-gps" onclick="applyGPSToShot(${i})">
+        ショット${i+1}（${LIE_LABELS[s.lie]}）に反映
+      </button>`).join('');
+}
+
+function applyGPSToShot(i) {
+  if (!gpsA || !gpsB) return;
+  const yards = Math.round(haversine(gpsA.lat, gpsA.lng, gpsB.lat, gpsB.lng) * 1.09361);
+  draft.holes[holeIndex].shots[i].distance = yards;
+  Storage.saveDraft(draft);
+  renderHole();
 }
 
 // ── Lie → Club → Direction → Distance ──
@@ -495,6 +528,50 @@ function renderMissTable(shots) {
       }).join('')}
     </tbody>
   </table>`;
+}
+
+// ── Shot Edit ──
+function openEditShot(i) {
+  editingShotIndex = i;
+  const s = draft.holes[holeIndex].shots[i];
+  editLie = s.lie;
+  editClub = s.club;
+  editDirection = s.direction;
+  document.getElementById('edit-distance').value = s.distance || '';
+  renderEditShot();
+  showScreen('edit-shot');
+}
+
+function renderEditShot() {
+  document.querySelectorAll('.btn-edit-lie').forEach(btn => {
+    btn.classList.toggle('edit-selected', btn.dataset.value === editLie);
+  });
+  document.querySelectorAll('.btn-edit-club').forEach(btn => {
+    btn.classList.toggle('edit-selected', btn.dataset.value === editClub);
+  });
+  document.querySelectorAll('.btn-edit-dir').forEach(btn => {
+    btn.classList.toggle('edit-selected', btn.dataset.value === editDirection);
+  });
+  const isOB = editLie === 'ob';
+  document.getElementById('edit-club-section').style.display = isOB ? 'none' : '';
+  document.getElementById('edit-dir-section').style.display = isOB ? 'none' : '';
+}
+
+function setEditLie(v) { editLie = v; renderEditShot(); }
+function setEditClub(v) { editClub = v; renderEditShot(); }
+function setEditDir(v) { editDirection = v; renderEditShot(); }
+
+function updateShot() {
+  const val = document.getElementById('edit-distance').value;
+  const isOB = editLie === 'ob';
+  draft.holes[holeIndex].shots[editingShotIndex] = {
+    lie: editLie,
+    club: isOB ? null : editClub,
+    direction: isOB ? null : editDirection,
+    distance: isOB || !val ? null : parseInt(val),
+  };
+  Storage.saveDraft(draft);
+  showScreen('hole');
 }
 
 // ── Utils ──
