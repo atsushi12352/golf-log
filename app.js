@@ -28,6 +28,7 @@ let currentClub = null;
 let currentDirection = null;
 let charts = {};
 let setupPars = [...PRESETS.standard.pars];
+let scorecardRound = null;
 let gpsA = null, gpsB = null;
 let editingShotIndex = null;
 let editLie = null, editClub = null, editDirection = null;
@@ -41,6 +42,7 @@ function showScreen(name) {
   if (name === 'setup') initSetup();
   if (name === 'hole') renderHole();
   if (name === 'analysis') renderAnalysis();
+  if (name === 'scorecard') renderScorecard();
 }
 
 // ── Home ──
@@ -63,7 +65,7 @@ function renderHome() {
       const par = r.pars.reduce((a,b) => a+b, 0);
       const diff = score - par;
       const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
-      return `<div class="round-item">
+      return `<div class="round-item" onclick="viewScorecard(${origIdx})">
         <div>
           <div class="round-date">${fmtDate(r.date)}</div>
           <div class="round-sub">${r.courseName || 'コース未設定'} · ${diffStr}</div>
@@ -168,41 +170,35 @@ function generateTestData() {
   const MID = ['3W', '5W', 'UT', '5I', '6I', '7I', '8I'];
   const DIRS = ['far-left', 'left', 'straight', 'straight', 'straight', 'right', 'far-right'];
   const LIES = ['fairway', 'fairway', 'rough', 'rough', 'bunker', 'around'];
+  const CLUB_DIST = {
+    '1W':[210,260], '3W':[185,220], '5W':[165,200], 'UT':[155,190],
+    '4I':[148,175], '5I':[138,163], '6I':[127,152], '7I':[115,140],
+    '8I':[105,128], '9I':[93,117], 'PW':[83,107], 'AW':[68,92], 'SW':[48,78],
+  };
 
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const randDist = club => {
+    const r = CLUB_DIST[club];
+    return r ? Math.round(r[0] + Math.random() * (r[1] - r[0])) : null;
+  };
 
   draft.holes.forEach(hole => {
     const diff = Math.floor(Math.random() * 6) - 1; // -1〜+4
     const score = Math.max(2, hole.par + diff);
-    const putts = Math.min(Math.floor(Math.random() * 3) + 1, score - 1); // 1〜3、ショット最低1本確保
+    const putts = Math.min(Math.floor(Math.random() * 3) + 1, score - 1);
     const numShots = score - putts;
 
     hole.putts = putts;
     hole.shots = Array(numShots).fill(null).map((_, i) => {
       if (i === 0) {
-        // 1打目：ティーショット
-        return {
-          lie: 'tee',
-          club: hole.par === 3 ? pick(IRONS) : pick(WOODS),
-          direction: pick(DIRS),
-          distance: null,
-        };
+        const club = hole.par === 3 ? pick(IRONS) : pick(WOODS);
+        return { lie: 'tee', club, direction: pick(DIRS), distance: randDist(club) };
       } else if (i === numShots - 1 && numShots > 1) {
-        // 最終ショット：アプローチ
-        return {
-          lie: pick(['fairway', 'around', 'around']),
-          club: pick(APPROACH),
-          direction: pick(DIRS),
-          distance: null,
-        };
+        const club = pick(APPROACH);
+        return { lie: pick(['fairway', 'around', 'around']), club, direction: pick(DIRS), distance: randDist(club) };
       } else {
-        // 中間ショット
-        return {
-          lie: pick(LIES),
-          club: pick(MID),
-          direction: pick(DIRS),
-          distance: null,
-        };
+        const club = pick(MID);
+        return { lie: pick(LIES), club, direction: pick(DIRS), distance: randDist(club) };
       }
     });
   });
@@ -396,12 +392,13 @@ function totalScore(round) {
 }
 
 function calcStats(round) {
-  let gir=0, putts=0, birdie=0, par=0, bogey=0, dbl=0;
+  let gir=0, bogeyOn=0, putts=0, birdie=0, par=0, bogey=0, dbl=0;
   round.holes.forEach(h => {
     const score = h.shots.length + h.putts;
     const diff = score - h.par;
     putts += h.putts;
     if (h.shots.length > 0 && h.shots.length <= h.par - 2) gir++;
+    if (h.shots.length > 0 && h.shots.length <= h.par - 1) bogeyOn++;
     if (diff <= -1) birdie++;
     else if (diff === 0) par++;
     else if (diff === 1) bogey++;
@@ -409,6 +406,7 @@ function calcStats(round) {
   });
   return {
     gir: Math.round(gir / 18 * 100),
+    bogeyOn: Math.round(bogeyOn / 18 * 100),
     avgPutts: (putts / 18).toFixed(1),
     birdie, par, bogey, dbl,
   };
@@ -427,6 +425,7 @@ function renderComplete() {
   const s = calcStats(draft);
   document.getElementById('complete-stats').innerHTML = `
     <div class="stat-row"><span class="stat-label">パーオン率</span><span class="stat-value">${s.gir}%</span></div>
+    <div class="stat-row"><span class="stat-label">ボギーオン率</span><span class="stat-value">${s.bogeyOn}%</span></div>
     <div class="stat-row"><span class="stat-label">平均パット数</span><span class="stat-value">${s.avgPutts}</span></div>
     <div class="stat-row"><span class="stat-label">バーディ以下</span><span class="stat-value">${s.birdie} ホール</span></div>
     <div class="stat-row"><span class="stat-label">パー</span><span class="stat-value">${s.par} ホール</span></div>
@@ -452,6 +451,21 @@ function discardRound() {
 }
 
 // ── Analysis ──
+function getPeriodFilteredRounds(rounds) {
+  const period = document.getElementById('analysis-period-selector')?.value || 'all';
+  if (period === 'all') return rounds;
+  const now = new Date();
+  let cutoff;
+  if (period === 'month') {
+    cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (period === '3months') {
+    cutoff = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+  } else if (period === 'year') {
+    cutoff = new Date(now.getFullYear(), 0, 1);
+  }
+  return rounds.filter(r => new Date(r.date) >= cutoff);
+}
+
 function renderAnalysis() {
   const rounds = Storage.getRounds();
   const noData = document.getElementById('no-analysis');
@@ -465,55 +479,82 @@ function renderAnalysis() {
   noData.style.display = 'none';
   content.style.display = 'block';
 
-  const allHoles = rounds.flatMap(r => r.holes);
+  updateAnalysisRoundSelector();
+}
+
+function updateAnalysisRoundSelector() {
+  const rounds = Storage.getRounds();
+  const filtered = getPeriodFilteredRounds(rounds);
+  const sel = document.getElementById('analysis-round-selector');
+  const prevId = sel.dataset.selectedId || 'all';
+
+  sel.innerHTML = '<option value="all">全ラウンド</option>' +
+    filtered.slice().reverse().map(r => {
+      const score = totalScore(r);
+      return `<option value="${r.id}">${fmtDate(r.date)} ${r.courseName || ''} (${score})</option>`;
+    }).join('');
+
+  if ([...sel.options].some(o => o.value === prevId)) sel.value = prevId;
+  else sel.value = 'all';
+  sel.dataset.selectedId = sel.value;
+
+  refreshAnalysis();
+}
+
+function refreshAnalysis() {
+  const rounds = Storage.getRounds();
+  const filtered = getPeriodFilteredRounds(rounds);
+  const sel = document.getElementById('analysis-round-selector');
+  const roundId = sel ? sel.value : 'all';
+  if (sel) sel.dataset.selectedId = roundId;
+
+  let targetRounds;
+  if (roundId === 'all') {
+    targetRounds = filtered;
+  } else {
+    const r = filtered.find(r => r.id === roundId);
+    targetRounds = r ? [r] : filtered;
+  }
+
+  const allHoles = targetRounds.flatMap(r => r.holes);
   const allShots = allHoles.flatMap(h => h.shots);
 
-  const scores = rounds.map(r => totalScore(r));
-  const pars = rounds.map(r => r.pars.reduce((a,b)=>a+b,0));
-  let totalGir=0, totalPutts=0, birdie=0, par=0, bogey=0, dbl=0;
+  const scores = targetRounds.map(r => totalScore(r));
+  const pars = targetRounds.map(r => r.pars.reduce((a,b)=>a+b,0));
+  let totalGir=0, totalBogeyOn=0, totalPutts=0, birdie=0, par=0, bogey=0, dbl=0;
   allHoles.forEach(h => {
     const score = h.shots.length + h.putts;
     const diff = score - h.par;
     totalPutts += h.putts;
     if (h.shots.length > 0 && h.shots.length <= h.par - 2) totalGir++;
+    if (h.shots.length > 0 && h.shots.length <= h.par - 1) totalBogeyOn++;
     if (diff <= -1) birdie++;
     else if (diff === 0) par++;
     else if (diff === 1) bogey++;
     else dbl++;
   });
   const n = allHoles.length;
-  const avgScore = (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
-  const bestScore = Math.min(...scores);
-  const avgDiff = (scores.map((s,i)=>s-pars[i]).reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
 
-  document.getElementById('overall-stats').innerHTML = `
-    <div class="stat-row"><span class="stat-label">ラウンド数</span><span class="stat-value">${rounds.length}</span></div>
-    <div class="stat-row"><span class="stat-label">平均スコア</span><span class="stat-value">${avgScore} (${Number(avgDiff)>0?'+':''}${avgDiff})</span></div>
-    <div class="stat-row"><span class="stat-label">ベストスコア</span><span class="stat-value">${bestScore}</span></div>
+  let overallHtml = '';
+  if (roundId === 'all' && scores.length > 1) {
+    const avgScore = (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+    const bestScore = Math.min(...scores);
+    const avgDiff = (scores.map((s,i)=>s-pars[i]).reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+    overallHtml += `
+      <div class="stat-row"><span class="stat-label">ラウンド数</span><span class="stat-value">${rounds.length}</span></div>
+      <div class="stat-row"><span class="stat-label">平均スコア</span><span class="stat-value">${avgScore} (${Number(avgDiff)>0?'+':''}${avgDiff})</span></div>
+      <div class="stat-row"><span class="stat-label">ベストスコア</span><span class="stat-value">${bestScore}</span></div>`;
+  }
+  overallHtml += `
     <div class="stat-row"><span class="stat-label">パーオン率</span><span class="stat-value">${Math.round(totalGir/n*100)}%</span></div>
+    <div class="stat-row"><span class="stat-label">ボギーオン率</span><span class="stat-value">${Math.round(totalBogeyOn/n*100)}%</span></div>
     <div class="stat-row"><span class="stat-label">平均パット数</span><span class="stat-value">${(totalPutts/n).toFixed(1)}</span></div>`;
+  document.getElementById('overall-stats').innerHTML = overallHtml;
 
   renderScoreDistChart(birdie, par, bogey, dbl);
   renderDirectionChart(allShots);
   renderMissTable(allShots);
-
-  document.getElementById('analysis-round-list').innerHTML = rounds.slice().reverse().map((r, revIdx) => {
-    const origIdx = rounds.length - 1 - revIdx;
-    const score = totalScore(r);
-    const p = r.pars.reduce((a,b)=>a+b,0);
-    const diff = score - p;
-    const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
-    return `<div class="round-item">
-      <div>
-        <div class="round-date">${fmtDate(r.date)}</div>
-        <div class="round-sub">${r.courseName || 'コース未設定'} · ${diffStr}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="round-score">${score}</div>
-        <button class="btn-del-round" onclick="deleteRound(${origIdx}, event)">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
+  renderClubTable(allShots);
 }
 
 function renderScoreDistChart(birdie, par, bogey, dbl) {
@@ -586,6 +627,117 @@ function renderMissTable(shots) {
       }).join('')}
     </tbody>
   </table>`;
+}
+
+function renderClubTable(shots) {
+  const clubs = ['1W','3W','5W','UT','4I','5I','6I','7I','8I','9I','PW','AW','SW','PT'];
+  const dirs = ['far-left','left','straight','right','far-right'];
+  const data = {};
+  clubs.forEach(c => { data[c] = { count:0, distances:[], dirs:{} }; dirs.forEach(d => { data[c].dirs[d]=0; }); });
+  shots.filter(s => s.club && data[s.club]).forEach(s => {
+    const d = data[s.club];
+    d.count++;
+    if (s.distance) d.distances.push(s.distance);
+    if (s.direction) d.dirs[s.direction]++;
+  });
+
+  const rows = clubs.filter(c => data[c].count > 0).map(c => {
+    const d = data[c];
+    const avgDist = d.distances.length > 0
+      ? Math.round(d.distances.reduce((a,b)=>a+b,0)/d.distances.length) + 'yd'
+      : '—';
+    const totalDir = dirs.reduce((a,k)=>a+d.dirs[k],0);
+    const dirCells = dirs.map(k => {
+      const v = d.dirs[k];
+      const pct = totalDir > 0 ? Math.round(v/totalDir*100) : 0;
+      const cls = k === 'straight' && pct > 0 && pct === Math.max(...dirs.map(k2=>totalDir>0?Math.round(d.dirs[k2]/totalDir*100):0))
+        ? 'cell-high'
+        : (k !== 'straight' && pct >= 30) ? 'cell-mid' : '';
+      return `<td><span class="${cls}">${totalDir > 0 ? pct+'%' : '—'}</span></td>`;
+    }).join('');
+    return `<tr>
+      <td class="miss-td-label">${c}</td>
+      <td>${d.count}</td>
+      <td>${avgDist}</td>
+      ${dirCells}
+    </tr>`;
+  });
+
+  document.getElementById('club-analysis-table').innerHTML = rows.length === 0
+    ? '<div style="padding:16px;color:var(--secondary);text-align:center">データなし</div>'
+    : `<table class="miss-table">
+        <thead><tr>
+          <th class="miss-td-label">クラブ</th>
+          <th>回数</th><th>平均飛距離</th>
+          ${dirs.map(k=>`<th>${DIR_ICON[k]}<br><small>${DIR_LABEL[k]}</small></th>`).join('')}
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>`;
+}
+
+// ── Scorecard ──
+function viewScorecard(idx) {
+  scorecardRound = Storage.getRounds()[idx];
+  showScreen('scorecard');
+}
+
+function renderScorecard() {
+  if (!scorecardRound) return;
+  const r = scorecardRound;
+  const totalPar = r.pars.reduce((a,b)=>a+b,0);
+  const score = totalScore(r);
+  const diff = score - totalPar;
+  const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
+
+  document.getElementById('scorecard-title').textContent = fmtDate(r.date);
+  document.getElementById('scorecard-hero').innerHTML = `
+    <div style="font-size:64px;font-weight:100;letter-spacing:-3px">${score}</div>
+    <div style="font-size:22px;color:var(--secondary);font-weight:300">${diffStr}</div>
+    <div style="font-size:14px;color:var(--secondary);margin-top:6px">${r.courseName || 'コース未設定'}</div>`;
+
+  const makeRow = (h) => {
+    const sc = h.shots.length + h.putts;
+    const d = sc - h.par;
+    const color = d < 0 ? 'var(--green)' : d > 0 ? 'var(--red)' : 'inherit';
+    const dStr = sc > 0 ? (d > 0 ? `+${d}` : d === 0 ? 'E' : `${d}`) : '—';
+    return `<tr>
+      <td class="sc-hole">${h.holeNumber}</td>
+      <td class="sc-par">${h.par}</td>
+      <td>${h.shots.length || '—'}</td>
+      <td>${h.putts || '—'}</td>
+      <td class="sc-score" style="color:${color}">${sc || '—'}</td>
+      <td style="color:${color};font-weight:600">${sc ? dStr : '—'}</td>
+    </tr>`;
+  };
+
+  const frontHoles = r.holes.slice(0,9);
+  const backHoles = r.holes.slice(9);
+  const frontPar = frontHoles.reduce((a,h)=>a+h.par,0);
+  const backPar = backHoles.reduce((a,h)=>a+h.par,0);
+  const frontScore = frontHoles.reduce((a,h)=>a+h.shots.length+h.putts,0);
+  const backScore = backHoles.reduce((a,h)=>a+h.shots.length+h.putts,0);
+
+  document.getElementById('scorecard-table').innerHTML = `
+    <table class="scorecard-tbl">
+      <thead><tr><th>H</th><th>Par</th><th>打数</th><th>Putt</th><th>計</th><th>±</th></tr></thead>
+      <tbody>
+        ${frontHoles.map(makeRow).join('')}
+        <tr class="sc-subtotal"><td>前半</td><td>${frontPar}</td><td></td><td></td><td>${frontScore}</td><td></td></tr>
+        ${backHoles.map(makeRow).join('')}
+        <tr class="sc-subtotal"><td>後半</td><td>${backPar}</td><td></td><td></td><td>${backScore}</td><td></td></tr>
+        <tr class="sc-total"><td>合計</td><td>${totalPar}</td><td></td><td></td><td>${score}</td><td style="font-weight:700">${diffStr}</td></tr>
+      </tbody>
+    </table>`;
+
+  const s = calcStats(r);
+  document.getElementById('scorecard-stats').innerHTML = `
+    <div class="stat-row"><span class="stat-label">パーオン率</span><span class="stat-value">${s.gir}%</span></div>
+    <div class="stat-row"><span class="stat-label">ボギーオン率</span><span class="stat-value">${s.bogeyOn}%</span></div>
+    <div class="stat-row"><span class="stat-label">平均パット数</span><span class="stat-value">${s.avgPutts}</span></div>
+    <div class="stat-row"><span class="stat-label">バーディ以下</span><span class="stat-value">${s.birdie} ホール</span></div>
+    <div class="stat-row"><span class="stat-label">パー</span><span class="stat-value">${s.par} ホール</span></div>
+    <div class="stat-row"><span class="stat-label">ボギー</span><span class="stat-value">${s.bogey} ホール</span></div>
+    <div class="stat-row"><span class="stat-label">ダブルボギー以上</span><span class="stat-value">${s.dbl} ホール</span></div>`;
 }
 
 // ── Shot Edit ──

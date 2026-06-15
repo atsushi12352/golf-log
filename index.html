@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Golf Log</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -323,6 +323,19 @@
       <p>分析データがありません<br>ラウンドを記録してください</p>
     </div>
     <div id="analysis-content">
+      <div class="section" style="margin-bottom:16px">
+        <div style="display:flex;gap:8px">
+          <select id="analysis-period-selector" class="round-selector" style="flex:1" onchange="updateAnalysisRoundSelector()">
+            <option value="all">全期間</option>
+            <option value="year">今年</option>
+            <option value="3months">過去3ヶ月</option>
+            <option value="month">今月</option>
+          </select>
+          <select id="analysis-round-selector" class="round-selector" style="flex:2" onchange="refreshAnalysis()">
+            <option value="all">全ラウンド</option>
+          </select>
+        </div>
+      </div>
       <div class="section">
         <div class="section-header">総合スタッツ</div>
         <div class="card" id="overall-stats"></div>
@@ -340,14 +353,33 @@
         <div class="card" id="miss-pattern-table" style="overflow-x:auto"></div>
       </div>
       <div class="section">
-        <div class="section-header">ラウンド履歴</div>
-        <div id="analysis-round-list" class="card-list"></div>
+        <div class="section-header">クラブ別分析</div>
+        <div class="card" id="club-analysis-table" style="overflow-x:auto"></div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- スコアカード -->
+<div id="screen-scorecard" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('home')">戻る</button>
+    <div class="navbar-title" id="scorecard-title">スコアカード</div>
+  </nav>
+  <div class="content">
+    <div class="card" id="scorecard-hero" style="text-align:center;padding:28px 24px;margin-bottom:0"></div>
+    <div class="section" style="margin-top:20px">
+      <div class="section-header">ホール別スコア</div>
+      <div class="card" id="scorecard-table" style="overflow-x:auto"></div>
+    </div>
+    <div class="section">
+      <div class="section-header">スタッツ</div>
+      <div class="card" id="scorecard-stats"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

@@ -400,6 +400,34 @@ body {
   background: #FFF3E0; color: #E65100;
 }
 
+/* ── Round selector ── */
+.round-selector {
+  width: 100%; padding: 12px 16px;
+  background: var(--card); border: none; border-radius: 12px;
+  font-size: 15px; color: var(--label);
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+/* ── Scorecard table ── */
+.scorecard-tbl { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 280px; }
+.scorecard-tbl th {
+  padding: 10px 8px; text-align: center;
+  color: var(--secondary); font-weight: 400; font-size: 12px;
+  border-bottom: 1px solid var(--sep);
+}
+.scorecard-tbl td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--sep); }
+.scorecard-tbl tr:last-child td { border-bottom: none; }
+.sc-hole { color: var(--secondary); font-size: 13px; }
+.sc-par { color: var(--secondary); }
+.sc-score { font-weight: 600; }
+.sc-subtotal td { background: var(--bg); font-weight: 600; font-size: 13px; }
+.sc-total td { background: var(--label); color: #fff; font-weight: 600; }
+
 /* ── Delete round button ── */
 .btn-del-round {
   background: none; border: none;
