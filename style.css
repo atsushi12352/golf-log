@@ -310,6 +310,25 @@ body {
 .btn-club small { font-size: 11px; font-weight: 400; color: var(--secondary); }
 .btn-club:active { transform: scale(0.95); background: #EBEBF0; }
 
+/* ── Distance input screen ── */
+.distance-input-row {
+  display: flex; align-items: center;
+  justify-content: center; padding: 28px 16px; gap: 10px;
+}
+.distance-input {
+  border: none; outline: none;
+  font-size: 52px; font-weight: 200;
+  width: 160px; text-align: right;
+  color: var(--label); background: transparent;
+}
+.distance-unit { font-size: 26px; font-weight: 300; color: var(--secondary); }
+.btn-text-secondary {
+  display: block; width: 100%; margin-top: 10px;
+  background: none; border: none;
+  color: var(--secondary); font-size: 17px;
+  cursor: pointer; padding: 14px; text-align: center;
+}
+
 /* ── Shot club badge ── */
 .shot-club {
   font-size: 12px; font-weight: 600;
@@ -334,6 +353,13 @@ body {
 .distance-result {
   font-size: 26px; font-weight: 200;
   min-width: 70px; text-align: center; color: var(--label);
+}
+
+/* ── Shot distance badge ── */
+.shot-dist {
+  font-size: 12px; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px;
+  background: #FFF3E0; color: #E65100;
 }
 
 /* ── Delete round button ── */

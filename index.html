@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Golf Log</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -162,7 +162,7 @@
 <!-- 方向選択 -->
 <div id="screen-direction" class="screen">
   <nav class="navbar">
-    <button class="navbar-left btn-text" onclick="showScreen('lie')">戻る</button>
+    <button class="navbar-left btn-text" onclick="showScreen('club')">戻る</button>
     <div class="navbar-title">方向を選択</div>
   </nav>
   <div class="content">
@@ -183,7 +183,7 @@
 <!-- クラブ選択 -->
 <div id="screen-club" class="screen">
   <nav class="navbar">
-    <button class="navbar-left btn-text" onclick="showScreen('direction')">戻る</button>
+    <button class="navbar-left btn-text" onclick="showScreen('lie')">戻る</button>
     <div class="navbar-title">クラブを選択</div>
   </nav>
   <div class="content">
@@ -202,6 +202,29 @@
       <button class="btn-club" onclick="selectClub('AW')">AW</button>
       <button class="btn-club" onclick="selectClub('SW')">SW</button>
       <button class="btn-club" onclick="selectClub('PT')">PT<small>パター</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- 飛距離入力 -->
+<div id="screen-distance" class="screen">
+  <nav class="navbar">
+    <button class="navbar-left btn-text" onclick="showScreen('direction')">戻る</button>
+    <div class="navbar-title">飛距離（任意）</div>
+  </nav>
+  <div class="content">
+    <div class="section">
+      <div class="card">
+        <div class="distance-input-row">
+          <input type="number" id="input-distance" class="distance-input" placeholder="180" inputmode="numeric" min="0" max="400">
+          <span class="distance-unit">yd</span>
+        </div>
+      </div>
+      <div class="hint">入力しない場合はスキップできます</div>
+    </div>
+    <div class="section">
+      <button class="btn-primary" onclick="saveShot()">記録する</button>
+      <button class="btn-text-secondary" onclick="saveShot(true)">スキップ</button>
     </div>
   </div>
 </div>
@@ -264,6 +287,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

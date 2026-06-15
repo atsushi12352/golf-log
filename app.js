@@ -24,6 +24,7 @@ const PRESETS = {
 let draft = null;
 let holeIndex = 0;
 let currentLie = null;
+let currentClub = null;
 let currentDirection = null;
 let charts = {};
 let setupPars = [...PRESETS.standard.pars];
@@ -179,6 +180,7 @@ function renderHole() {
       <span class="shot-num">${i+1}</span>
       <span class="shot-lie">${LIE_LABELS[s.lie]}</span>
       ${s.club ? `<span class="shot-club">${s.club}</span>` : ''}
+      ${s.distance ? `<span class="shot-dist">${s.distance}yd</span>` : ''}
       ${s.direction ? `<span class="shot-dir">${DIR_ICON[s.direction]}</span>` : ''}
       <button class="shot-del" onclick="removeShot(${i})">×</button>
     </div>`).join('');
@@ -246,8 +248,8 @@ function markGPS(point) {
     btn.disabled = false;
     btn.classList.add('marked');
     if (gpsA && gpsB) {
-      const dist = Math.round(haversine(gpsA.lat, gpsA.lng, gpsB.lat, gpsB.lng));
-      document.getElementById('distance-result').textContent = dist + ' m';
+      const yards = Math.round(haversine(gpsA.lat, gpsA.lng, gpsB.lat, gpsB.lng) * 1.09361);
+      document.getElementById('distance-result').textContent = yards + ' yd';
     }
   }, () => {
     btn.textContent = point === 'a' ? '📍 打つ前' : '📍 ボール地点';
@@ -263,28 +265,36 @@ function resetGPS() {
   if (btnA) { btnA.textContent = '📍 打つ前'; btnA.classList.remove('marked'); btnA.disabled = false; }
   if (btnB) { btnB.textContent = '📍 ボール地点'; btnB.classList.remove('marked'); btnB.disabled = false; }
   const res = document.getElementById('distance-result');
-  if (res) res.textContent = '— m';
+  if (res) res.textContent = '— yd';
 }
 
-// ── Lie → Direction → Club ──
+// ── Lie → Club → Direction → Distance ──
 function selectLie(lie) {
   currentLie = lie;
   if (lie === 'ob') {
-    draft.holes[holeIndex].shots.push({ lie, direction: null, club: null });
+    draft.holes[holeIndex].shots.push({ lie, club: null, direction: null, distance: null });
     Storage.saveDraft(draft);
     showScreen('hole');
   } else {
-    showScreen('direction');
+    showScreen('club');
   }
+}
+
+function selectClub(club) {
+  currentClub = club;
+  showScreen('direction');
 }
 
 function selectDirection(dir) {
   currentDirection = dir;
-  showScreen('club');
+  document.getElementById('input-distance').value = '';
+  showScreen('distance');
 }
 
-function selectClub(club) {
-  draft.holes[holeIndex].shots.push({ lie: currentLie, direction: currentDirection, club });
+function saveShot(skip) {
+  const val = document.getElementById('input-distance').value;
+  const distance = skip || !val ? null : parseInt(val);
+  draft.holes[holeIndex].shots.push({ lie: currentLie, club: currentClub, direction: currentDirection, distance });
   Storage.saveDraft(draft);
   showScreen('hole');
 }
