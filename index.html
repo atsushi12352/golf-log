@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Golf Log</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -156,6 +156,7 @@
       <button class="btn-big" onclick="selectLie('bunker')"><span class="big-icon">⛱</span>バンカー</button>
       <button class="btn-big" onclick="selectLie('around')"><span class="big-icon">📍</span>グリーン周り</button>
       <button class="btn-big btn-big-danger" onclick="selectLie('ob')"><span class="big-icon">🚫</span>OB</button>
+      <button class="btn-big btn-big-danger" onclick="selectLie('red-penalty')"><span class="big-icon">🔴</span>レッドペナ</button>
     </div>
   </div>
 </div>
@@ -178,6 +179,7 @@
       <button class="btn-dir" onclick="selectDirection('right')"><span class="dir-icon">↗</span><span>やや右</span></button>
       <button class="btn-dir" onclick="selectDirection('far-right')"><span class="dir-icon">↘</span><span>右</span></button>
     </div>
+    <button class="btn-dir btn-dir-short" onclick="selectDirection('short')"><span class="dir-icon">↓</span><span>ショート</span></button>
   </div>
 </div>
 
@@ -224,6 +226,7 @@
         <button class="btn-edit-lie" data-value="bunker" onclick="setEditLie('bunker')">⛱ バンカー</button>
         <button class="btn-edit-lie" data-value="around" onclick="setEditLie('around')">📍 グリーン周り</button>
         <button class="btn-edit-lie" data-value="ob" onclick="setEditLie('ob')">🚫 OB</button>
+        <button class="btn-edit-lie" data-value="red-penalty" onclick="setEditLie('red-penalty')">🔴 レッドペナ</button>
       </div>
     </div>
     <div class="section" id="edit-club-section">
@@ -254,6 +257,7 @@
         <button class="btn-dir btn-edit-dir" data-value="right" onclick="setEditDir('right')"><span class="dir-icon">↗</span><span>やや右</span></button>
         <button class="btn-dir btn-edit-dir" data-value="far-right" onclick="setEditDir('far-right')"><span class="dir-icon">↘</span><span>右</span></button>
       </div>
+      <button class="btn-dir btn-edit-dir btn-dir-short" data-value="short" onclick="setEditDir('short')"><span class="dir-icon">↓</span><span>ショート</span></button>
     </div>
     <div class="section">
       <div class="section-header">飛距離</div>
@@ -340,6 +344,10 @@
         <div class="section-header">総合スタッツ</div>
         <div class="card" id="overall-stats"></div>
       </div>
+      <div class="section" id="section-score-history">
+        <div class="section-header">スコア推移</div>
+        <div class="card chart-card"><canvas id="score-history-chart"></canvas></div>
+      </div>
       <div class="section">
         <div class="section-header">スコア分布</div>
         <div class="card chart-card"><canvas id="score-dist-chart"></canvas></div>
@@ -380,6 +388,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

@@ -393,6 +393,23 @@ body {
 }
 .btn-apply-gps:active { opacity: 0.7; }
 
+/* ── Shot penalty badge ── */
+.shot-penalty {
+  font-size: 12px; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px;
+  background: #FFE5E5; color: var(--red);
+}
+
+/* ── Short direction button ── */
+.btn-dir-short {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; width: 100%; margin-top: 8px;
+  background: var(--card); border: none; border-radius: 12px;
+  padding: 14px; font-size: 13px; cursor: pointer; color: var(--label);
+}
+.btn-dir-short:active { background: #E5E5EA; }
+.btn-dir-short .dir-icon { font-size: 22px; }
+
 /* ── Shot distance badge ── */
 .shot-dist {
   font-size: 12px; font-weight: 600;

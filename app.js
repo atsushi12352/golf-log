@@ -8,9 +8,9 @@ const Storage = {
 };
 
 // ── Constants ──
-const LIE_LABELS = { tee:'ティー', fairway:'FW', rough:'ラフ', bunker:'バンカー', around:'グリーン周り', ob:'OB' };
-const DIR_ICON = { 'far-left':'↙', left:'↖', straight:'↑', right:'↗', 'far-right':'↘' };
-const DIR_LABEL = { 'far-left':'左', left:'やや左', straight:'まっすぐ', right:'やや右', 'far-right':'右' };
+const LIE_LABELS = { tee:'ティー', fairway:'FW', rough:'ラフ', bunker:'バンカー', around:'グリーン周り', ob:'OB', 'red-penalty':'レッドペナ' };
+const DIR_ICON = { 'far-left':'↙', left:'↖', straight:'↑', right:'↗', 'far-right':'↘', short:'↓' };
+const DIR_LABEL = { 'far-left':'左', left:'やや左', straight:'まっすぐ', right:'やや右', 'far-right':'右', short:'ショート' };
 
 const PRESETS = {
   standard:        { name: '標準',           pars: [4,4,3,4,4,3,4,5,4,4,4,3,4,4,5,3,4,5] },
@@ -216,7 +216,7 @@ function renderHole() {
   document.getElementById('next-hole-btn').textContent = isLast ? 'ラウンド終了' : '次のホールへ';
   document.getElementById('putts-display').textContent = hole.putts;
 
-  const score = hole.shots.length + hole.putts;
+  const score = holeScore(hole);
   const scoreEl = document.getElementById('hole-score-display');
   const vsParEl = document.getElementById('hole-vs-par-display');
   if (score > 0) {
@@ -235,6 +235,7 @@ function renderHole() {
     <div class="shot-item">
       <span class="shot-num">${i+1}</span>
       <span class="shot-lie">${LIE_LABELS[s.lie]}</span>
+      ${s.penalty ? `<span class="shot-penalty">+1ペナ</span>` : ''}
       ${s.club ? `<span class="shot-club">${s.club}</span>` : ''}
       ${s.distance ? `<span class="shot-dist">${s.distance}yd</span>` : ''}
       ${s.direction ? `<span class="shot-dir">${DIR_ICON[s.direction]}</span>` : ''}
@@ -358,8 +359,8 @@ function applyGPSToShot(i) {
 // ── Lie → Club → Direction → Distance ──
 function selectLie(lie) {
   currentLie = lie;
-  if (lie === 'ob') {
-    draft.holes[holeIndex].shots.push({ lie, club: null, direction: null, distance: null });
+  if (lie === 'ob' || lie === 'red-penalty') {
+    draft.holes[holeIndex].shots.push({ lie, club: null, direction: null, distance: null, penalty: 1 });
     Storage.saveDraft(draft);
     showScreen('hole');
   } else {
@@ -387,14 +388,18 @@ function saveShot(skip) {
 }
 
 // ── Complete ──
+function holeScore(h) {
+  return h.shots.reduce((s, shot) => s + 1 + (shot.penalty || 0), 0) + h.putts;
+}
+
 function totalScore(round) {
-  return round.holes.reduce((sum, h) => sum + h.shots.length + h.putts, 0);
+  return round.holes.reduce((sum, h) => sum + holeScore(h), 0);
 }
 
 function calcStats(round) {
   let gir=0, bogeyOn=0, putts=0, birdie=0, par=0, bogey=0, dbl=0;
   round.holes.forEach(h => {
-    const score = h.shots.length + h.putts;
+    const score = holeScore(h);
     const diff = score - h.par;
     putts += h.putts;
     if (h.shots.length > 0 && h.shots.length <= h.par - 2) gir++;
@@ -523,7 +528,7 @@ function refreshAnalysis() {
   const pars = targetRounds.map(r => r.pars.reduce((a,b)=>a+b,0));
   let totalGir=0, totalBogeyOn=0, totalPutts=0, birdie=0, par=0, bogey=0, dbl=0;
   allHoles.forEach(h => {
-    const score = h.shots.length + h.putts;
+    const score = holeScore(h);
     const diff = score - h.par;
     totalPutts += h.putts;
     if (h.shots.length > 0 && h.shots.length <= h.par - 2) totalGir++;
@@ -551,6 +556,7 @@ function refreshAnalysis() {
     <div class="stat-row"><span class="stat-label">平均パット数</span><span class="stat-value">${(totalPutts/n).toFixed(1)}</span></div>`;
   document.getElementById('overall-stats').innerHTML = overallHtml;
 
+  renderScoreHistoryChart(targetRounds);
   renderScoreDistChart(birdie, par, bogey, dbl);
   renderDirectionChart(allShots);
   renderMissTable(allShots);
@@ -576,8 +582,46 @@ function renderScoreDistChart(birdie, par, bogey, dbl) {
   });
 }
 
+function renderScoreHistoryChart(rounds) {
+  if (charts.history) charts.history.destroy();
+  if (rounds.length < 2) {
+    const el = document.getElementById('score-history-chart');
+    if (el) el.parentElement.parentElement.style.display = 'none';
+    return;
+  }
+  const el = document.getElementById('score-history-chart');
+  if (el) el.parentElement.parentElement.style.display = '';
+  const sorted = [...rounds].sort((a,b) => a.date.localeCompare(b.date));
+  const labels = sorted.map(r => fmtDate(r.date));
+  const scores = sorted.map(r => totalScore(r));
+  const pars = sorted.map(r => r.pars.reduce((a,b)=>a+b,0));
+  const diffs = scores.map((s,i) => s - pars[i]);
+  charts.history = new Chart(
+    document.getElementById('score-history-chart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'スコア',
+        data: scores,
+        borderColor: '#007AFF',
+        backgroundColor: 'rgba(0,122,255,0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: '#007AFF',
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false } },
+    },
+  });
+}
+
 function renderDirectionChart(shots) {
-  const keys = ['far-left','left','straight','right','far-right'];
+  const keys = ['far-left','left','straight','right','far-right','short'];
   const counts = Object.fromEntries(keys.map(k => [k, 0]));
   shots.filter(s => s.direction).forEach(s => { if (counts[s.direction] !== undefined) counts[s.direction]++; });
 
@@ -588,7 +632,7 @@ function renderDirectionChart(shots) {
     data: {
       labels: keys.map(k => DIR_LABEL[k]),
       datasets: [{ data: keys.map(k => counts[k]),
-        backgroundColor: ['#FF3B30','#FF9500','#34C759','#FF9500','#FF3B30'],
+        backgroundColor: ['#FF3B30','#FF9500','#34C759','#FF9500','#FF3B30','#AF52DE'],
         borderWidth: 2, borderColor: '#fff' }],
     },
     options: {
@@ -600,7 +644,7 @@ function renderDirectionChart(shots) {
 
 function renderMissTable(shots) {
   const lies = ['tee','fairway','rough','bunker','around'];
-  const dirs = ['far-left','left','straight','right','far-right'];
+  const dirs = ['far-left','left','straight','right','far-right','short'];
   const matrix = {};
   lies.forEach(l => { matrix[l] = {}; dirs.forEach(d => matrix[l][d] = 0); });
   shots.filter(s => s.direction && matrix[s.lie]).forEach(s => { matrix[s.lie][s.direction]++; });
@@ -631,7 +675,7 @@ function renderMissTable(shots) {
 
 function renderClubTable(shots) {
   const clubs = ['1W','3W','5W','UT','4I','5I','6I','7I','8I','9I','PW','AW','SW','PT'];
-  const dirs = ['far-left','left','straight','right','far-right'];
+  const dirs = ['far-left','left','straight','right','far-right','short'];
   const data = {};
   clubs.forEach(c => { data[c] = { count:0, distances:[], dirs:{} }; dirs.forEach(d => { data[c].dirs[d]=0; }); });
   shots.filter(s => s.club && data[s.club]).forEach(s => {
@@ -696,7 +740,7 @@ function renderScorecard() {
     <div style="font-size:14px;color:var(--secondary);margin-top:6px">${r.courseName || 'コース未設定'}</div>`;
 
   const makeRow = (h) => {
-    const sc = h.shots.length + h.putts;
+    const sc = holeScore(h);
     const d = sc - h.par;
     const color = d < 0 ? 'var(--green)' : d > 0 ? 'var(--red)' : 'inherit';
     const dStr = sc > 0 ? (d > 0 ? `+${d}` : d === 0 ? 'E' : `${d}`) : '—';
@@ -714,8 +758,8 @@ function renderScorecard() {
   const backHoles = r.holes.slice(9);
   const frontPar = frontHoles.reduce((a,h)=>a+h.par,0);
   const backPar = backHoles.reduce((a,h)=>a+h.par,0);
-  const frontScore = frontHoles.reduce((a,h)=>a+h.shots.length+h.putts,0);
-  const backScore = backHoles.reduce((a,h)=>a+h.shots.length+h.putts,0);
+  const frontScore = frontHoles.reduce((a,h)=>a+holeScore(h),0);
+  const backScore = backHoles.reduce((a,h)=>a+holeScore(h),0);
 
   document.getElementById('scorecard-table').innerHTML = `
     <table class="scorecard-tbl">
@@ -762,9 +806,9 @@ function renderEditShot() {
   document.querySelectorAll('.btn-edit-dir').forEach(btn => {
     btn.classList.toggle('edit-selected', btn.dataset.value === editDirection);
   });
-  const isOB = editLie === 'ob';
-  document.getElementById('edit-club-section').style.display = isOB ? 'none' : '';
-  document.getElementById('edit-dir-section').style.display = isOB ? 'none' : '';
+  const isPenalty = editLie === 'ob' || editLie === 'red-penalty';
+  document.getElementById('edit-club-section').style.display = isPenalty ? 'none' : '';
+  document.getElementById('edit-dir-section').style.display = isPenalty ? 'none' : '';
 }
 
 function setEditLie(v) { editLie = v; renderEditShot(); }
@@ -773,12 +817,13 @@ function setEditDir(v) { editDirection = v; renderEditShot(); }
 
 function updateShot() {
   const val = document.getElementById('edit-distance').value;
-  const isOB = editLie === 'ob';
+  const isPenalty = editLie === 'ob' || editLie === 'red-penalty';
   draft.holes[holeIndex].shots[editingShotIndex] = {
     lie: editLie,
-    club: isOB ? null : editClub,
-    direction: isOB ? null : editDirection,
-    distance: isOB || !val ? null : parseInt(val),
+    club: isPenalty ? null : editClub,
+    direction: isPenalty ? null : editDirection,
+    distance: isPenalty || !val ? null : parseInt(val),
+    penalty: isPenalty ? 1 : 0,
   };
   Storage.saveDraft(draft);
   showScreen('hole');
