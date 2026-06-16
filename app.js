@@ -64,7 +64,7 @@ function renderHome() {
       const score = totalScore(r);
       const par = r.pars.reduce((a,b) => a+b, 0);
       const diff = score - par;
-      const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
+      const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? '±0' : `${diff}`;
       return `<div class="round-item" onclick="viewScorecard(${origIdx})">
         <div>
           <div class="round-date">${fmtDate(r.date)}</div>
@@ -113,10 +113,11 @@ function setParPreset(key) {
   const preset = PRESETS[key];
   if (!preset) return;
   setupPars = [...preset.pars];
-  // コース名も自動入力（リージェント系のみ）
   if (key.startsWith('regent-')) {
     document.getElementById('input-course').value = preset.name;
   }
+  document.getElementById('start-section').style.display = key.startsWith('regent-') ? '' : 'none';
+  document.getElementById('input-start').value = '1';
   renderParGrid();
 }
 
@@ -134,17 +135,17 @@ function cyclePar(i) {
 }
 
 function startRound() {
+  const startHole = parseInt(document.getElementById('input-start')?.value || '1');
+  const holes = Array(18).fill(null).map((_, i) => {
+    const hNum = startHole === 10 ? (i < 9 ? 10 + i : i - 9 + 1) : i + 1;
+    return { holeNumber: hNum, par: setupPars[hNum - 1], shots: [], putts: 0 };
+  });
   draft = {
     id: Date.now().toString(),
     date: document.getElementById('input-date').value,
     courseName: document.getElementById('input-course').value,
     pars: [...setupPars],
-    holes: Array(18).fill(null).map((_, i) => ({
-      holeNumber: i + 1,
-      par: setupPars[i],
-      shots: [],
-      putts: 0,
-    })),
+    holes,
     currentHoleIndex: 0,
   };
 
@@ -222,7 +223,7 @@ function renderHole() {
   if (score > 0) {
     scoreEl.textContent = score;
     const diff = score - hole.par;
-    vsParEl.textContent = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
+    vsParEl.textContent = diff > 0 ? `+${diff}` : diff === 0 ? '±0' : `${diff}`;
     vsParEl.style.color = diff < 0 ? 'var(--green)' : diff === 0 ? 'var(--label)' : 'var(--red)';
   } else {
     scoreEl.textContent = '—';
@@ -397,7 +398,7 @@ function totalScore(round) {
 }
 
 function calcStats(round) {
-  let gir=0, bogeyOn=0, putts=0, birdie=0, par=0, bogey=0, dbl=0;
+  let gir=0, bogeyOn=0, putts=0, birdie=0, par=0, bogey=0, dbl=0, ob=0, redPenalty=0;
   round.holes.forEach(h => {
     const score = holeScore(h);
     const diff = score - h.par;
@@ -408,12 +409,16 @@ function calcStats(round) {
     else if (diff === 0) par++;
     else if (diff === 1) bogey++;
     else dbl++;
+    h.shots.forEach(s => {
+      if (s.lie === 'ob') ob++;
+      if (s.lie === 'red-penalty') redPenalty++;
+    });
   });
   return {
     gir: Math.round(gir / 18 * 100),
     bogeyOn: Math.round(bogeyOn / 18 * 100),
     avgPutts: (putts / 18).toFixed(1),
-    birdie, par, bogey, dbl,
+    birdie, par, bogey, dbl, ob, redPenalty,
   };
 }
 
@@ -421,7 +426,7 @@ function renderComplete() {
   const score = totalScore(draft);
   const totalPar = draft.pars.reduce((a,b) => a+b, 0);
   const diff = score - totalPar;
-  const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
+  const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? '±0' : `${diff}`;
 
   document.getElementById('complete-score').textContent = score;
   document.getElementById('complete-vs-par').textContent = diffStr;
@@ -435,7 +440,9 @@ function renderComplete() {
     <div class="stat-row"><span class="stat-label">バーディ以下</span><span class="stat-value">${s.birdie} ホール</span></div>
     <div class="stat-row"><span class="stat-label">パー</span><span class="stat-value">${s.par} ホール</span></div>
     <div class="stat-row"><span class="stat-label">ボギー</span><span class="stat-value">${s.bogey} ホール</span></div>
-    <div class="stat-row"><span class="stat-label">ダブルボギー以上</span><span class="stat-value">${s.dbl} ホール</span></div>`;
+    <div class="stat-row"><span class="stat-label">ダブルボギー以上</span><span class="stat-value">${s.dbl} ホール</span></div>
+    <div class="stat-row"><span class="stat-label">OB</span><span class="stat-value">${s.ob} 回</span></div>
+    ${s.redPenalty > 0 ? `<div class="stat-row"><span class="stat-label">レッドペナルティ</span><span class="stat-value">${s.redPenalty} 回</span></div>` : ''}`;
 }
 
 function saveRound() {
@@ -554,10 +561,17 @@ function refreshAnalysis() {
     <div class="stat-row"><span class="stat-label">パーオン率</span><span class="stat-value">${Math.round(totalGir/n*100)}%</span></div>
     <div class="stat-row"><span class="stat-label">ボギーオン率</span><span class="stat-value">${Math.round(totalBogeyOn/n*100)}%</span></div>
     <div class="stat-row"><span class="stat-label">平均パット数</span><span class="stat-value">${(totalPutts/n).toFixed(1)}</span></div>`;
+
+  const totalOb = allShots.filter(s => s.lie === 'ob').length;
+  const totalRedPenalty = allShots.filter(s => s.lie === 'red-penalty').length;
+  overallHtml += `
+    <div class="stat-row"><span class="stat-label">OB</span><span class="stat-value">${totalOb} 回</span></div>
+    ${totalRedPenalty > 0 ? `<div class="stat-row"><span class="stat-label">レッドペナルティ</span><span class="stat-value">${totalRedPenalty} 回</span></div>` : ''}`;
   document.getElementById('overall-stats').innerHTML = overallHtml;
 
   renderScoreHistoryChart(targetRounds);
   renderScoreDistChart(birdie, par, bogey, dbl);
+  renderParStats(allHoles);
   renderDirectionChart(allShots);
   renderMissTable(allShots);
   renderClubTable(allShots);
@@ -580,6 +594,62 @@ function renderScoreDistChart(birdie, par, bogey, dbl) {
       scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
     },
   });
+}
+
+function renderParStats(holes) {
+  const parGroups = { 3: [], 4: [], 5: [] };
+  holes.forEach(h => {
+    if (parGroups[h.par]) parGroups[h.par].push(h);
+  });
+
+  const cols = [3, 4, 5].filter(p => parGroups[p].length > 0);
+  if (cols.length === 0) {
+    document.getElementById('par-stats-table').innerHTML = '';
+    return;
+  }
+
+  const metrics = cols.map(p => {
+    const hs = parGroups[p];
+    const n = hs.length;
+    const scores = hs.map(h => holeScore(h));
+    const avgScore = (scores.reduce((a,b)=>a+b,0)/n).toFixed(2);
+    const avgVsPar = ((scores.reduce((a,b)=>a+b,0)/n) - p).toFixed(2);
+    const gir = hs.filter(h => h.shots.length > 0 && h.shots.length <= h.par - 2).length;
+    const bogeyOn = hs.filter(h => h.shots.length > 0 && h.shots.length <= h.par - 1).length;
+    const obHoles = hs.filter(h => h.shots.some(s => s.lie === 'ob' || s.lie === 'red-penalty')).length;
+    const birdie = scores.filter((s,i) => s - hs[i].par <= -1).length;
+    const par = scores.filter((s,i) => s - hs[i].par === 0).length;
+    const bogey = scores.filter((s,i) => s - hs[i].par === 1).length;
+    const dbl = scores.filter((s,i) => s - hs[i].par >= 2).length;
+    return { p, n, avgScore, avgVsPar, gir, bogeyOn, obHoles, birdie, par, bogey, dbl };
+  });
+
+  const fmt = (v, total) => total > 0 ? Math.round(v/total*100)+'%' : '—';
+  const rows = [
+    ['ホール数', m => m.n],
+    ['平均スコア', m => `${m.avgScore} (${Number(m.avgVsPar)>0?'+':''}${m.avgVsPar})`],
+    ['パーオン率', m => fmt(m.gir, m.n)],
+    ['ボギーオン率', m => fmt(m.bogeyOn, m.n)],
+    ['バーディ以下', m => fmt(m.birdie, m.n)],
+    ['パー', m => fmt(m.par, m.n)],
+    ['ボギー', m => fmt(m.bogey, m.n)],
+    ['ダブル以上', m => fmt(m.dbl, m.n)],
+    ['OB/ペナ含むホール', m => fmt(m.obHoles, m.n)],
+  ];
+
+  document.getElementById('par-stats-table').innerHTML = `
+    <table class="par-stats-tbl">
+      <thead><tr>
+        <th></th>
+        ${cols.map(p => `<th>Par ${p}</th>`).join('')}
+      </tr></thead>
+      <tbody>
+        ${rows.map(([label, fn]) => `<tr>
+          <td class="par-stats-label">${label}</td>
+          ${metrics.map(m => `<td>${fn(m)}</td>`).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
 }
 
 function renderScoreHistoryChart(rounds) {
@@ -731,7 +801,7 @@ function renderScorecard() {
   const totalPar = r.pars.reduce((a,b)=>a+b,0);
   const score = totalScore(r);
   const diff = score - totalPar;
-  const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
+  const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? '±0' : `${diff}`;
 
   document.getElementById('scorecard-title').textContent = fmtDate(r.date);
   document.getElementById('scorecard-hero').innerHTML = `
@@ -781,7 +851,9 @@ function renderScorecard() {
     <div class="stat-row"><span class="stat-label">バーディ以下</span><span class="stat-value">${s.birdie} ホール</span></div>
     <div class="stat-row"><span class="stat-label">パー</span><span class="stat-value">${s.par} ホール</span></div>
     <div class="stat-row"><span class="stat-label">ボギー</span><span class="stat-value">${s.bogey} ホール</span></div>
-    <div class="stat-row"><span class="stat-label">ダブルボギー以上</span><span class="stat-value">${s.dbl} ホール</span></div>`;
+    <div class="stat-row"><span class="stat-label">ダブルボギー以上</span><span class="stat-value">${s.dbl} ホール</span></div>
+    <div class="stat-row"><span class="stat-label">OB</span><span class="stat-value">${s.ob} 回</span></div>
+    ${s.redPenalty > 0 ? `<div class="stat-row"><span class="stat-label">レッドペナルティ</span><span class="stat-value">${s.redPenalty} 回</span></div>` : ''}`;
 }
 
 // ── Shot Edit ──

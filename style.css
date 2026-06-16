@@ -417,6 +417,18 @@ body {
   background: #FFF3E0; color: #E65100;
 }
 
+/* ── Par stats table ── */
+.par-stats-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.par-stats-tbl th {
+  padding: 10px 8px; text-align: center;
+  color: var(--secondary); font-weight: 600; font-size: 12px;
+  border-bottom: 1px solid var(--sep);
+  background: var(--bg);
+}
+.par-stats-tbl td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--sep); }
+.par-stats-tbl tr:last-child td { border-bottom: none; }
+.par-stats-label { text-align: left !important; font-size: 13px; color: var(--label2); padding-left: 14px !important; }
+
 /* ── Round selector ── */
 .round-selector {
   width: 100%; padding: 12px 16px;

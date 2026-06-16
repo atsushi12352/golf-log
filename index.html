@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Golf Log</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 
@@ -71,6 +71,18 @@
           <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-old')">旧コース<small>Par72</small></button>
           <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-new')">新コース<small>Par72</small></button>
           <button class="btn-preset btn-preset-accent" onclick="setParPreset('regent-thomson')">トムソン<small>Par72</small></button>
+        </div>
+      </div>
+    </div>
+    <div class="section" id="start-section" style="display:none">
+      <div class="section-header">スタートコース</div>
+      <div class="card">
+        <div class="form-row">
+          <label>スタート</label>
+          <select id="input-start" style="border:none;font-size:17px;color:var(--secondary);background:transparent;text-align:right">
+            <option value="1">OUTスタート（1番〜）</option>
+            <option value="10">INスタート（10番〜）</option>
+          </select>
         </div>
       </div>
     </div>
@@ -361,6 +373,10 @@
         <div class="card" id="miss-pattern-table" style="overflow-x:auto"></div>
       </div>
       <div class="section">
+        <div class="section-header">Par別分析</div>
+        <div class="card" id="par-stats-table" style="overflow-x:auto"></div>
+      </div>
+      <div class="section">
         <div class="section-header">クラブ別分析</div>
         <div class="card" id="club-analysis-table" style="overflow-x:auto"></div>
       </div>
@@ -388,6 +404,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
